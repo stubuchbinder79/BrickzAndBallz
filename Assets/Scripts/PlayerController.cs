@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(LineRenderer))]
 public class PlayerController : MonoBehaviour
 {
+    public static event Action OnNextShot = delegate { };
     public BallDisplay pitcher;
     public BallDisplay catcher;
     public BallTrajectory ballTrajectory;
@@ -17,6 +19,7 @@ public class PlayerController : MonoBehaviour
     private Ball[] balls;
     private float ballDelay = 0.1f;
     private float speed = 10f;
+    private bool _ballsLaunched;
 
     private void Start()
     {
@@ -35,6 +38,9 @@ public class PlayerController : MonoBehaviour
 
     void BallTrajectory_OnBallFire(Vector3 pos)
     {
+        if (_ballsLaunched)
+            return;
+        
         Vector2 p1 = new Vector2(pos.x, pos.y);
         Vector2 p2 = new Vector2(ballSpawn.position.x, ballSpawn.position.y);
         float angle = Mathf.Atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Mathf.PI;
@@ -46,15 +52,18 @@ public class PlayerController : MonoBehaviour
     {
         ballsLanded++;
         catcher.numberOfBalls = ballsLanded;
-        catcher.transform.position = new Vector2(obj.x, pitcher.transform.position.y);
-        catcher.gameObject.SetActive(true);
-        pitcher.gameObject.SetActive(false);
-        if (ballsLanded == maxBalls)
+
+        if(ballsLanded == 1) {
+            catcher.transform.position = new Vector2(obj.x, pitcher.transform.position.y);
+            catcher.gameObject.SetActive(true);
+            pitcher.gameObject.SetActive(false);
+        } else if (ballsLanded == maxBalls)
             NextSnot();
     }
 
     private void NextSnot()
     {
+        _ballsLaunched = false;
         Vector3 startPos = new Vector2(catcher.transform.position.x, 0);
         ballSpawn.transform.rotation = Quaternion.identity;
 
@@ -68,6 +77,8 @@ public class PlayerController : MonoBehaviour
         pitcher.numberOfBalls = maxBalls;
         catcher.numberOfBalls = 0;
         ballsLanded = 0;
+
+        OnNextShot();
 
     }
 
@@ -88,6 +99,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator LaunchBalls()
     {
+        _ballsLaunched = true;
         for (int i = 0; i < balls.Length; i++)
         {
             Ball ball = balls[i];

@@ -8,6 +8,7 @@ public class Ball : MonoBehaviour
     private readonly Vector2 LAUNCH_VELOCITY = new Vector2(0f, 10f);
 
     private bool isMoving;
+    private float _ballBounce = 0.03f;
 
     private void Awake()
     {
@@ -33,6 +34,10 @@ public class Ball : MonoBehaviour
         transform.localPosition = Vector3.zero;
     }
 
+    public void Bounce()
+    {
+        rb.AddForce(rb.velocity.normalized * _ballBounce, ForceMode2D.Impulse);
+    }
     internal void Launch(float ballSpeed)
     {
         rb.isKinematic = false;
